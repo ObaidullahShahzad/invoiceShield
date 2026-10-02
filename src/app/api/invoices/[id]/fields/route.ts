@@ -7,7 +7,7 @@ import { getInvoice, invoices, writeAudit } from "@/lib/server/repo";
 import { fieldsPatchSchema } from "@/lib/server/validation";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 export const PATCH = handle(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
   const user = await requireApiUser(req);

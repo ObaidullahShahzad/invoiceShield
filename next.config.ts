@@ -10,7 +10,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Native / worker-based packages must not be bundled.
-  serverExternalPackages: ["tesseract.js", "firebase-admin"],
+  serverExternalPackages: ["tesseract.js", "firebase-admin", "mammoth"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

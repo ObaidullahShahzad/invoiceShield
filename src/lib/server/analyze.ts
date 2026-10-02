@@ -8,7 +8,7 @@ import { explainFindings, extractFields } from "./ai/ai";
 import { db } from "./firebase-admin";
 import { getInvoice, invoices, listInvoices, listVendors, toHistory, writeAudit } from "./repo";
 import { getFile } from "./storage";
-import { ExtractionError, textFromImage, textFromPdf } from "./text";
+import { ExtractionError, textFromFile } from "./text";
 
 export interface Actor {
   uid: string;
@@ -50,7 +50,7 @@ export async function analyzeInvoice(opts: { ownerUid: string; actor: Actor; inv
       await setStage(invoiceId, "extracting");
       if (!invoice.storagePath) throw new ExtractionError("unreadable", "No document is stored for this invoice.");
       const file = await getFile(invoice.storagePath);
-      const text = invoice.mimeType === "application/pdf" ? await textFromPdf(file) : await textFromImage(file);
+      const text = await textFromFile(file, invoice.mimeType);
       const out = await extractFields(text);
       fields = out.fields;
       uncertain = out.uncertainFields;

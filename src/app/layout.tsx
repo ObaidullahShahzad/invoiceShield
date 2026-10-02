@@ -16,7 +16,8 @@ export const viewport: Viewport = { themeColor: "#f7f7f8", width: "device-width"
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable} h-full`}>
-      <body className="min-h-full">
+      {/* Browser extensions (e.g. ColorZilla) inject attributes on <body>; don't treat that as a hydration error. */}
+      <body className="min-h-full" suppressHydrationWarning>
         {children}
         <Toaster
           position="bottom-right"

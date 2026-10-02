@@ -26,6 +26,8 @@ export async function chatJson<T>(req: JsonRequest & { schema: z.ZodType<T> }): 
   const e = env();
   if (e.AI_PROVIDER === "none") return null;
   const jsonSchema = z.toJSONSchema(req.schema);
+  // On Vercel both model calls plus the rules must finish inside the 60 s function limit.
+  const timeoutMs = process.env.VERCEL ? Math.min(e.AI_TIMEOUT_MS, 20_000) : e.AI_TIMEOUT_MS;
   try {
     let content: string | undefined;
     if (e.AI_PROVIDER === "ollama") {
@@ -44,7 +46,7 @@ export async function chatJson<T>(req: JsonRequest & { schema: z.ZodType<T> }): 
             { role: "user", content: req.user },
           ],
         }),
-        signal: AbortSignal.timeout(e.AI_TIMEOUT_MS),
+        signal: AbortSignal.timeout(timeoutMs),
       });
       if (!res.ok) return null;
       content = ((await res.json()) as { message?: { content?: string } }).message?.content;
@@ -62,7 +64,7 @@ export async function chatJson<T>(req: JsonRequest & { schema: z.ZodType<T> }): 
             { role: "user", content: req.user },
           ],
         }),
-        signal: AbortSignal.timeout(e.AI_TIMEOUT_MS),
+        signal: AbortSignal.timeout(timeoutMs),
       });
       if (!res.ok) return null;
       content = ((await res.json()) as { choices?: { message?: { content?: string } }[] }).choices?.[0]?.message?.content;
@@ -87,6 +89,10 @@ export async function aiStatus(): Promise<AiStatus> {
     if (!res.ok) throw new Error();
     const body = (await res.json()) as { models?: { name: string }[] };
     const installed = body.models?.some((m) => m.name === e.OLLAMA_MODEL || m.name.startsWith(e.OLLAMA_MODEL + ":") || e.OLLAMA_MODEL.startsWith(m.name));
+    // Loading the model from disk is the slowest step, so start it now (fire-and-forget) rather than on the first upload.
+    if (installed) {
+      fetch(`${e.OLLAMA_BASE_URL}/api/generate`, { method: "POST", body: JSON.stringify({ model: e.OLLAMA_MODEL, keep_alive: "30m" }) }).catch(() => undefined);
+    }
     return { provider: "ollama", available: Boolean(installed), model: e.OLLAMA_MODEL, external: false };
   } catch {
     return { provider: "ollama", available: false, model: e.OLLAMA_MODEL, external: false };

@@ -56,5 +56,5 @@ The model never creates findings or scores: rules do. Numbers the model returns 
 ## Limitations (prototype)
 
 Scores are review indicators, not fraud probabilities. Analysis runs in-process after the response (no queue), history comparison loads the
-user's invoices into memory (fine to a few thousand), scanned PDFs without a text layer need to be uploaded as images for OCR, and access is
+user's invoices into memory (fine to a few thousand), scanned PDFs without a text layer need to be uploaded as images for OCR, Word files must be .docx (not legacy .doc or macro-enabled .docm), and access is
 per-user rather than per-organisation. See Part B of the implementation plan for the production roadmap.

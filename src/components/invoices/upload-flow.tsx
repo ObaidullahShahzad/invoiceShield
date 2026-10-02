@@ -13,8 +13,8 @@ import { cn, formatBytes } from "@/lib/utils";
 
 gsap.registerPlugin(useGSAP);
 
-const MAX_MB = 10;
-const ACCEPT = ["application/pdf", "image/png", "image/jpeg"];
+const MAX_MB = 4;
+const ACCEPT = ["application/pdf", "image/png", "image/jpeg", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
 
 const SAMPLES = [
   { file: "01-legitimate-apex-supplies.pdf", title: "Legitimate invoice", note: "Matches vendor register — expect low risk" },
@@ -22,6 +22,7 @@ const SAMPLES = [
   { file: "03-account-and-amount-meridian.pdf", title: "Bank account and amount", note: "Different bank account, amount above usual range" },
   { file: "04-lookalike-and-arithmetic.pdf", title: "Look-alike vendor", note: "Name resembles a vendor; total does not add up" },
   { file: "05-replayed-invoice-summit.pdf", title: "Replayed invoice, new bank", note: "Old invoice number, changed bank details, inflated amount" },
+  { file: "06-word-invoice-summit.docx", title: "Word document (DOCX)", note: "Same checks on a .docx file — expect low risk" },
 ];
 
 type Phase = "idle" | "uploading" | "analyzing" | "failed";
@@ -53,7 +54,7 @@ export function UploadFlow() {
   );
 
   const validate = (f: File): string | null => {
-    if (!ACCEPT.includes(f.type) && !/\.(pdf|png|jpe?g)$/i.test(f.name)) return "Unsupported file type. Choose a PDF, PNG or JPEG.";
+    if (!ACCEPT.includes(f.type) && !/\.(pdf|png|jpe?g|docx)$/i.test(f.name)) return /\.doc$/i.test(f.name) ? "Legacy .doc files are not supported. Save it as .docx or PDF and try again." : "Unsupported file type. Choose a PDF, PNG, JPEG or DOCX.";
     if (f.size > MAX_MB * 1024 * 1024) return `This file is ${formatBytes(f.size)}. The limit is ${MAX_MB} MB.`;
     if (f.size === 0) return "This file is empty.";
     return null;
@@ -118,7 +119,7 @@ export function UploadFlow() {
     try {
       const res = await fetch(`/samples/${name}`);
       const blob = await res.blob();
-      const f = new File([blob], name, { type: "application/pdf" });
+      const f = new File([blob], name, { type: name.endsWith(".docx") ? ACCEPT[3] : "application/pdf" });
       setFile(f);
       setError(null);
       start(f);
@@ -189,8 +190,8 @@ export function UploadFlow() {
               <CloudUpload className="size-5" strokeWidth={1.75} aria-hidden />
             </div>
             <p className="text-[15px] font-semibold tracking-[-0.01em]">{drag ? "Release to upload" : "Drop an invoice here"}</p>
-            <p className="mt-1 text-[13px] text-muted">PDF, PNG or JPEG · up to {MAX_MB} MB</p>
-            <input ref={input} type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" className="sr-only" id="file" onChange={(e) => pick(e.target.files?.[0])} />
+            <p className="mt-1 text-[13px] text-muted">PDF, PNG, JPEG or DOCX · up to {MAX_MB} MB</p>
+            <input ref={input} type="file" accept=".pdf,.png,.jpg,.jpeg,.docx,application/pdf,image/png,image/jpeg,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="sr-only" id="file" onChange={(e) => pick(e.target.files?.[0])} />
             <Button className="mt-6" onClick={() => input.current?.click()}>
               Browse files
             </Button>
