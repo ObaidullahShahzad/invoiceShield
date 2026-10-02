@@ -1,26 +1,138 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Design system — neutral, low-chroma, enterprise.
+ * Colour is reserved for meaning (risk, errors). Everything else is greyscale,
+ * with a single restrained accent used for focus, selection and progress.
+ */
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Surfaces */
+  --color-canvas: #f7f7f8;
+  --color-surface: #ffffff;
+  --color-sunken: #f4f4f5;
+  --color-hover: #f1f1f3;
+
+  /* Lines */
+  --color-line: #ebebee;
+  --color-line-strong: #dddde2;
+
+  /* Text */
+  --color-ink: #111113;
+  --color-ink-2: #3a3a42;
+  --color-muted: #6c6c76;
+  --color-subtle: #9d9da7;
+
+  /* Primary actions are ink; accent is used sparingly */
+  --color-brand: #111113;
+  --color-brand-strong: #000000;
+  --color-accent: #3a55c8;
+  --color-accent-soft: #eef1fb;
+
+  /* Semantic — muted tones, used only where they carry meaning */
+  --color-low: #2e7650;
+  --color-low-bg: #eef6f1;
+  --color-medium: #9a6408;
+  --color-medium-bg: #fbf6ea;
+  --color-high: #b8501d;
+  --color-high-bg: #fcf2ec;
+  --color-critical: #b4232b;
+  --color-critical-bg: #fcefef;
+  --color-neutral-bg: #f1f1f3;
+
+  --shadow-card: 0 1px 2px rgb(17 17 19 / 0.04);
+  --shadow-pop: 0 12px 32px -8px rgb(17 17 19 / 0.16), 0 2px 6px -1px rgb(17 17 19 / 0.06);
+  --shadow-ring: 0 0 0 1px rgb(17 17 19 / 0.06);
+  --radius-card: 12px;
+
+  --animate-overlay-in: overlay-in 0.18s ease-out both;
+  --animate-dialog-in: dialog-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-pop-in: pop-in 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-sweep: sweep 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  ::selection {
+    background: rgb(58 85 200 / 0.16);
+  }
+  /* Native search "x" clashes with the custom inputs */
+  input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+  .bg-dots {
+    background-image: radial-gradient(rgb(17 17 19 / 0.07) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.98);
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+@keyframes sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

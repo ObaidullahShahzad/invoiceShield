@@ -1,0 +1,10 @@
+rules_version = '2';
+// All data access goes through the Next.js server using the Admin SDK (which bypasses rules).
+// Clients therefore get no direct access at all: defence in depth against a leaked web config.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

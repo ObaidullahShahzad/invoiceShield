@@ -1,0 +1,9 @@
+rules_version = '2';
+// Invoice files are written and read by the server only (Admin SDK). No direct client access.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

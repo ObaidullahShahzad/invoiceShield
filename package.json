@@ -6,21 +6,46 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "samples": "node scripts/make-samples.mjs",
+    "emulators": "firebase emulators:start --only auth,firestore --project demo-invoiceshield",
+    "dev:emulator": "NEXT_PUBLIC_USE_EMULATORS=true NEXT_PUBLIC_FIREBASE_API_KEY=demo-key NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=localhost NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-invoiceshield NEXT_PUBLIC_FIREBASE_APP_ID=demo-app NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=demo-invoiceshield.appspot.com FIREBASE_ADMIN_PROJECT_ID=demo-invoiceshield FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 STORAGE_DRIVER=local next dev",
+    "seed:users": "tsx --conditions=react-server --env-file=.env.local --tsconfig tsconfig.json scripts/seed-users.ts"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@radix-ui/react-dropdown-menu": "^2.1.24",
+    "@radix-ui/react-tooltip": "^1.2.16",
+    "clsx": "^2.1.1",
+    "firebase": "^12.19.0",
+    "firebase-admin": "^14.5.0",
+    "gsap": "^3.15.0",
+    "lucide-react": "^1.49.0",
     "next": "16.3.8",
+    "pdf-lib": "^1.17.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "recharts": "^3.10.1",
+    "server-only": "^0.0.1",
+    "sonner": "^2.0.8",
+    "tailwind-merge": "^3.7.0",
+    "tesseract.js": "^7.0.0",
+    "unpdf": "^1.8.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^26.6.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
   }
 }
