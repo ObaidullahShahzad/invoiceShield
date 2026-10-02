@@ -11,6 +11,13 @@ import { formatMoney } from "@/lib/domain/money";
 import { parseVendorCsv, VENDOR_IMPORT_MAX_BYTES, type VendorImportIssue } from "@/lib/domain/vendor-import";
 import { cn, formatBytes } from "@/lib/utils";
 
+const SAMPLE_FILES = [
+  { file: "vendors-1-new-vendors.csv", title: "New vendors (25)", note: "Clean list of new suppliers — imports without errors" },
+  { file: "vendors-2-updates.csv", title: "Updates to existing vendors (8)", note: "Changed bank accounts and approvals — tick “Update existing vendors”" },
+  { file: "vendors-3-with-errors.csv", title: "File with mistakes (12)", note: "Semicolon-separated; shows how invalid rows are rejected" },
+  { file: "vendor-import-template.csv", title: "Blank template", note: "Header row and three example lines" },
+];
+
 interface Result {
   created: number;
   updated: number;
@@ -141,14 +148,29 @@ export function VendorImportDialog({ open, onOpenChange, existingNames }: { open
 
             <p className="text-xs leading-relaxed text-muted">
               Columns: <code className="font-mono">name</code> (required), <code className="font-mono">approved</code>, <code className="font-mono">bank_account</code>, <code className="font-mono">min_amount</code>,{" "}
-              <code className="font-mono">max_amount</code>, <code className="font-mono">currency</code>, <code className="font-mono">tax_id</code>. Only the last 4 digits of a bank account are kept.{" "}
-              <a href="/samples/vendor-import-template.csv" download className="inline-flex items-center gap-1 font-medium text-ink underline underline-offset-2">
-                <Download className="size-3" aria-hidden /> Download template
-              </a> ·{" "}
-              <a href="/samples/vendor-demo-list.csv" download className="font-medium text-ink underline underline-offset-2">
-                demo list (25 vendors)
-              </a>
+              <code className="font-mono">max_amount</code>, <code className="font-mono">currency</code>, <code className="font-mono">tax_id</code>. Only the last 4 digits of a bank account are kept.
             </p>
+
+            {file ? null : (
+              <div>
+                <p className="mb-1.5 text-xs font-medium text-muted">Sample files</p>
+                <ul className="divide-y divide-line rounded-lg border border-line">
+                  {SAMPLE_FILES.map((s) => (
+                    <li key={s.file}>
+                      <a href={`/samples/${s.file}`} download={s.file} className="group flex items-center gap-3 px-3 py-2 transition-colors hover:bg-sunken/60">
+                        <FileSpreadsheet className="size-4 shrink-0 text-subtle" aria-hidden />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[13px] font-medium text-ink">{s.title}</span>
+                          <span className="block truncate text-xs text-muted">{s.note}</span>
+                        </span>
+                        <Download className="size-4 shrink-0 text-subtle group-hover:text-ink" aria-hidden />
+                        <span className="sr-only">Download {s.file}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {readError ? (
               <Notice tone="error" icon={CircleAlert}>
