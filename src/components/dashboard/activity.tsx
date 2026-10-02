@@ -1,4 +1,4 @@
-import { ArrowRight, CircleCheck, FilePlus2, Flag, History, PencilLine, RotateCcw, ScanSearch, ShieldOff, TriangleAlert, UserCog, type LucideIcon } from "lucide-react";
+import { ArrowRight, CircleCheck, FilePlus2, FileSpreadsheet, Flag, History, PencilLine, RotateCcw, ScanSearch, ShieldOff, TriangleAlert, UserCog, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { Card, CardHeader, cardLink } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/misc";
@@ -17,6 +17,7 @@ export const AUDIT_ICON: Record<string, LucideIcon> = {
   "review.reopen": RotateCcw,
   "vendor.created": UserCog,
   "vendor.updated": UserCog,
+  "vendor.imported": FileSpreadsheet,
 };
 
 /** Only events that warrant attention get colour on their icon. */

@@ -1,10 +1,11 @@
 "use client";
-import { BadgeCheck, Building2, CircleSlash, Pencil, Plus, Search, SearchX } from "lucide-react";
+import { BadgeCheck, Building2, CircleSlash, FileSpreadsheet, Pencil, Plus, Search, SearchX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { th } from "@/components/dashboard/review-queue";
 import { Pill } from "@/components/ui/badge";
+import { VendorImportDialog } from "@/components/vendors/vendor-import";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogClose, DialogContent, DialogFooter } from "@/components/ui/dialog";
@@ -110,6 +111,8 @@ export function VendorManager({ vendors }: { vendors: Row[] }) {
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Row | null>(null);
   const [open, setOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const existingNames = useMemo(() => new Set(vendors.map((v) => v.normalizedName)), [vendors]);
   const rows = useMemo(() => vendors.filter((v) => v.name.toLowerCase().includes(q.trim().toLowerCase())), [vendors, q]);
   const approved = vendors.filter((v) => v.approved).length;
 
@@ -129,12 +132,25 @@ export function VendorManager({ vendors }: { vendors: Row[] }) {
           <p className="hidden px-2 text-[12.5px] text-muted sm:block">
             <span className="tnum font-medium text-ink">{approved}</span> of {vendors.length} approved
           </p>
+          <Button variant="secondary" size="sm" onClick={() => setImporting(true)}>
+            <FileSpreadsheet className="size-4" aria-hidden /> Import CSV
+          </Button>
           <Button variant="primary" size="sm" onClick={add}>
             <Plus className="size-4" aria-hidden /> Add vendor
           </Button>
         </div>
         {vendors.length === 0 ? (
-          <EmptyState icon={Building2} title="No vendors registered" description="Add the vendors you pay so unknown-vendor and bank-account checks can run." action={<Button variant="primary" onClick={add}>Add vendor</Button>} />
+          <EmptyState icon={Building2} title="No vendors registered" description="Add the vendors you pay so unknown-vendor and bank-account checks can run." action={
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button variant="secondary" onClick={() => setImporting(true)}>
+                  <FileSpreadsheet className="size-4" aria-hidden /> Import CSV
+                </Button>
+                <Button variant="primary" onClick={add}>
+                  Add vendor
+                </Button>
+              </div>
+            }
+          />
         ) : rows.length === 0 ? (
           <EmptyState icon={SearchX} title="No vendors match your search" />
         ) : (
@@ -206,6 +222,7 @@ export function VendorManager({ vendors }: { vendors: Row[] }) {
         )}
       </Card>
       <VendorDialog key={editing?.id ?? "new"} vendor={editing} open={open} onOpenChange={setOpen} />
+      <VendorImportDialog open={importing} onOpenChange={setImporting} existingNames={existingNames} />
     </>
   );
 }

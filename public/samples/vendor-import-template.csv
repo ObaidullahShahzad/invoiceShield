@@ -1,0 +1,4 @@
+name,approved,bank_account,min_amount,max_amount,currency,tax_id
+Apex Supplies Ltd.,yes,PK36 SCBL 0000 0011 2345 4421,100000,900000,PKR,
+Crescent Logistics (Pvt) Ltd,yes,7783,50000,400000,PKR,
+Orion Office Furniture,no,,20000,250000,PKR,

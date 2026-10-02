@@ -64,6 +64,7 @@ export const AUDIT_ACTION_LABEL: Record<string, string> = {
   "review.reopen": "Reopened for review",
   "vendor.created": "Added vendor",
   "vendor.updated": "Updated vendor",
+  "vendor.imported": "Imported vendors from CSV",
   "demo.seeded": "Loaded demo data",
 };
 
