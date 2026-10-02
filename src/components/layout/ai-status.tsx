@@ -38,7 +38,6 @@ export function AiStatusChip() {
         </span>
       </div>
       <p className="mt-0.5 truncate pl-[22px] font-mono text-[11px] text-subtle">{detail}</p>
-      {live && s.external ? <p className="mt-1 pl-[22px] text-[11px] font-medium text-medium">Synthetic data only</p> : null}
     </div>
   );
 }

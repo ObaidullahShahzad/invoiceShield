@@ -74,9 +74,8 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         <p className="mt-6 mb-1.5 px-2.5 text-[11px] font-medium tracking-[0.04em] text-subtle uppercase">Workspace</p>
         <NavLinks onNavigate={onNavigate} />
       </div>
-      <div className="mt-auto space-y-3 p-3">
+      <div className="mt-auto p-3">
         <AiStatusChip />
-        <p className="px-1 text-[11px] leading-relaxed text-subtle">Scores flag anomalies for review. They are not a judgement of intent or fraud.</p>
       </div>
     </div>
   );
