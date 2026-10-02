@@ -1,10 +1,13 @@
 "use client";
-import { History } from "lucide-react";
+import { CalendarDays, History, ListFilter, Search, SearchX, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { AUDIT_ICON, AUDIT_TONE } from "@/components/dashboard/activity";
 import { th } from "@/components/dashboard/review-queue";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DATE_PRESETS, FilterSelect, withinDays } from "@/components/ui/filter-select";
+import { fieldCls } from "@/components/ui/inputs";
 import { EmptyState } from "@/components/ui/misc";
 import { AUDIT_ACTION_LABEL, type AuditEventRecord } from "@/lib/domain/models";
 import { cn, formatDateTime } from "@/lib/utils";
@@ -18,7 +21,44 @@ const GROUPS = [
 
 export function AuditLog({ events }: { events: AuditEventRecord[] }) {
   const [group, setGroup] = useState("all");
-  const rows = useMemo(() => events.filter((e) => group === "all" || e.action.startsWith(group)), [events, group]);
+  const [q, setQ] = useState("");
+  const [action, setAction] = useState("");
+  const [actor, setActor] = useState("");
+  const [days, setDays] = useState("");
+
+  const actionOptions = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of events) if (group === "all" || e.action.startsWith(group)) m.set(e.action, (m.get(e.action) ?? 0) + 1);
+    return [...m.entries()].map(([a, n]) => ({ value: a, label: AUDIT_ACTION_LABEL[a] ?? a, icon: AUDIT_ICON[a] ?? History, count: n }));
+  }, [events, group]);
+
+  const actorOptions = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const e of events) m.set(e.actorName, (m.get(e.actorName) ?? 0) + 1);
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([a, n]) => ({ value: a, label: a, count: n }));
+  }, [events]);
+
+  const rows = useMemo(() => {
+    const n = q.trim().toLowerCase();
+    return events.filter((e) => {
+      if (group !== "all" && !e.action.startsWith(group)) return false;
+      if (action && e.action !== action) return false;
+      if (actor && e.actorName !== actor) return false;
+      if (!withinDays(e.createdAt, days)) return false;
+      if (n && !`${e.invoiceLabel ?? ""} ${e.note ?? ""} ${e.newValue ?? ""} ${e.actorName} ${AUDIT_ACTION_LABEL[e.action] ?? e.action}`.toLowerCase().includes(n)) return false;
+      return true;
+    });
+  }, [events, group, action, actor, days, q]);
+
+  const filtered = q || action || actor || days || group !== "all";
+  const reset = () => {
+    setGroup("all");
+    setQ("");
+    setAction("");
+    setActor("");
+    setDays("");
+  };
+
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2.5">
@@ -30,7 +70,10 @@ export function AuditLog({ events }: { events: AuditEventRecord[] }) {
                 key={g.value}
                 role="tab"
                 aria-selected={on}
-                onClick={() => setGroup(g.value)}
+                onClick={() => {
+                  setGroup(g.value);
+                  setAction("");
+                }}
                 className={cn(
                   "h-7 rounded-md px-2.5 text-[12.5px] font-medium transition-all",
                   on ? "bg-surface text-ink shadow-[0_0_0_1px_var(--color-line),0_1px_2px_rgb(17_17_19/0.06)]" : "text-muted hover:text-ink",
@@ -41,12 +84,29 @@ export function AuditLog({ events }: { events: AuditEventRecord[] }) {
             );
           })}
         </div>
-        <p className="ml-auto px-2 text-[12.5px] text-muted" aria-live="polite">
+        <div className="relative min-w-52 flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-subtle" aria-hidden />
+          <input value={q} onChange={(e) => setQ(e.target.value)} type="search" aria-label="Search audit trail" placeholder="Search invoice, note or person" className={cn(fieldCls, "h-8 pl-8")} />
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 border-b border-line bg-sunken/40 px-3 py-2">
+        <span className="mr-1 text-[11px] font-medium tracking-[0.05em] text-subtle uppercase">Filters</span>
+        <FilterSelect label="Action" icon={ListFilter} value={action} onChange={setAction} options={actionOptions} />
+        <FilterSelect label="Person" icon={UserRound} searchable value={actor} onChange={setActor} options={actorOptions} />
+        <FilterSelect label="Date" icon={CalendarDays} value={days} onChange={setDays} options={DATE_PRESETS} />
+        <p className="ml-auto px-1 text-[12.5px] text-muted" aria-live="polite">
           <span className="tnum font-medium text-ink">{rows.length}</span> event{rows.length === 1 ? "" : "s"}
         </p>
+        {filtered ? (
+          <Button variant="ghost" size="sm" onClick={reset}>
+            <X className="size-3.5" aria-hidden /> Reset all
+          </Button>
+        ) : null}
       </div>
-      {rows.length === 0 ? (
+      {events.length === 0 ? (
         <EmptyState icon={History} title="No events" description="Actions will appear here as they happen." />
+      ) : rows.length === 0 ? (
+        <EmptyState icon={SearchX} title="No events match these filters" description="Try a different search or reset the filters." action={<Button onClick={reset}>Reset filters</Button>} />
       ) : (
         <div className="scroll-thin overflow-x-auto">
           <table className="w-full min-w-[800px] text-left text-[13px]">

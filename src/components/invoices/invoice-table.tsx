@@ -1,12 +1,13 @@
 "use client";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, FileSearch, Search, SearchX, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Building2, CalendarDays, ChevronLeft, ChevronRight, CircleDashed, Eye, FileSearch, Gauge, LoaderCircle, Search, SearchX, ShieldOff, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { th } from "@/components/dashboard/review-queue";
 import { RiskBadge, StatusBadge } from "@/components/ui/badge";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { fieldCls, Select } from "@/components/ui/inputs";
+import { DATE_PRESETS, FilterSelect, withinDays } from "@/components/ui/filter-select";
+import { fieldCls } from "@/components/ui/inputs";
 import { EmptyState } from "@/components/ui/misc";
 import { formatMoney } from "@/lib/domain/money";
 import type { InvoiceRecord } from "@/lib/domain/models";
@@ -41,7 +42,9 @@ function SortTh({ k, sort, onSort, children, right, className }: { k: SortKey; s
 export function InvoiceTable({ invoices, initialQuery = "", initialStatus = "all" }: { invoices: InvoiceRecord[]; initialQuery?: string; initialStatus?: string }) {
   const [q, setQ] = useState(initialQuery);
   const [status, setStatus] = useState(initialStatus);
-  const [risk, setRisk] = useState("all");
+  const [risk, setRisk] = useState("");
+  const [vendor, setVendor] = useState("");
+  const [days, setDays] = useState("");
   const [sort, setSort] = useState<Sort>({ key: "createdAt", dir: "desc" });
   const [page, setPage] = useState(0);
 
@@ -55,13 +58,22 @@ export function InvoiceTable({ invoices, initialQuery = "", initialStatus = "all
     } as Record<string, number>;
   }, [invoices]);
 
+  const vendorOptions = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const i of invoices) if (i.vendorName) m.set(i.vendorName, (m.get(i.vendorName) ?? 0) + 1);
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([v, n]) => ({ value: v, label: v, count: n }));
+  }, [invoices]);
+  const riskCount = (l: string) => invoices.filter((i) => i.analysisStatus === "completed" && i.riskLevel === l).length;
+
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const out = invoices.filter((i) => {
       if (needle && !`${i.invoiceNumber ?? ""} ${i.vendorName ?? ""} ${i.originalFileName}`.toLowerCase().includes(needle)) return false;
       if (status === "open" && !["needs_review", "in_review", "flagged"].includes(i.reviewStatus)) return false;
       if (status !== "all" && status !== "open" && i.reviewStatus !== status) return false;
-      if (risk !== "all" && i.riskLevel !== risk) return false;
+      if (risk && (i.analysisStatus !== "completed" || i.riskLevel !== risk)) return false;
+      if (vendor && (i.vendorName ?? "") !== vendor) return false;
+      if (!withinDays(i.createdAt, days)) return false;
       return true;
     });
     const mul = sort.dir === "asc" ? 1 : -1;
@@ -71,12 +83,12 @@ export function InvoiceTable({ invoices, initialQuery = "", initialStatus = "all
       return (av < bv ? -1 : av > bv ? 1 : 0) * mul || RISK_ORDER[b.riskLevel] - RISK_ORDER[a.riskLevel];
     });
     return out;
-  }, [invoices, q, status, risk, sort]);
+  }, [invoices, q, status, risk, vendor, days, sort]);
 
   const pages = Math.max(1, Math.ceil(rows.length / PAGE));
   const current = Math.min(page, pages - 1);
   const slice = rows.slice(current * PAGE, current * PAGE + PAGE);
-  const filtered = q || status !== "all" || risk !== "all";
+  const filtered = q || status !== "all" || risk || vendor || days;
   const isTab = STATUS_TABS.some((t) => t.value === status);
 
   const toggle = (key: SortKey) => {
@@ -86,7 +98,9 @@ export function InvoiceTable({ invoices, initialQuery = "", initialStatus = "all
   const reset = () => {
     setQ("");
     setStatus("all");
-    setRisk("all");
+    setRisk("");
+    setVendor("");
+    setDays("");
     setPage(0);
   };
 
@@ -131,38 +145,63 @@ export function InvoiceTable({ invoices, initialQuery = "", initialStatus = "all
             className={cn(fieldCls, "h-8 pl-8")}
           />
         </div>
-        <Select
-          aria-label="More statuses"
+      </div>
+      <div className="flex flex-wrap items-center gap-2 border-b border-line bg-sunken/40 px-3 py-2">
+        <span className="mr-1 text-[11px] font-medium tracking-[0.05em] text-subtle uppercase">Filters</span>
+        <FilterSelect
+          label="Status"
+          icon={CircleDashed}
           value={isTab ? "" : status}
-          onChange={(e) => {
-            setStatus(e.target.value || "all");
+          onChange={(v) => {
+            setStatus(v || "all");
             setPage(0);
           }}
-          className="w-36 [&_select]:h-8"
-        >
-          <option value="">More statuses</option>
-          <option value="needs_review">Needs review</option>
-          <option value="cleared">Flag cleared</option>
-          <option value="pending_analysis">Analyzing</option>
-        </Select>
-        <Select
-          aria-label="Risk level"
+          options={[
+            { value: "needs_review", label: "Needs review", icon: Eye },
+            { value: "in_review", label: "In review", icon: CircleDashed },
+            { value: "cleared", label: "Flag cleared", icon: ShieldOff },
+            { value: "pending_analysis", label: "Analyzing", icon: LoaderCircle },
+          ]}
+        />
+        <FilterSelect
+          label="Risk"
+          icon={Gauge}
           value={risk}
-          onChange={(e) => {
-            setRisk(e.target.value);
+          onChange={(v) => {
+            setRisk(v);
             setPage(0);
           }}
-          className="w-32 [&_select]:h-8"
-        >
-          <option value="all">Any risk</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </Select>
+          options={[
+            { value: "critical", label: "Critical", dot: "bg-critical", count: riskCount("critical") },
+            { value: "high", label: "High", dot: "bg-high", count: riskCount("high") },
+            { value: "medium", label: "Medium", dot: "bg-medium", count: riskCount("medium") },
+            { value: "low", label: "Low", dot: "bg-low", count: riskCount("low") },
+          ]}
+        />
+        <FilterSelect
+          label="Vendor"
+          icon={Building2}
+          searchable
+          value={vendor}
+          onChange={(v) => {
+            setVendor(v);
+            setPage(0);
+          }}
+          options={vendorOptions}
+        />
+        <FilterSelect
+          label="Uploaded"
+          icon={CalendarDays}
+          value={days}
+          onChange={(v) => {
+            setDays(v);
+            setPage(0);
+          }}
+          options={DATE_PRESETS}
+        />
         {filtered ? (
-          <Button variant="ghost" size="sm" onClick={reset}>
-            <X className="size-3.5" aria-hidden /> Reset
+          <Button variant="ghost" size="sm" onClick={reset} className="ml-auto">
+            <X className="size-3.5" aria-hidden /> Reset all
           </Button>
         ) : null}
       </div>
